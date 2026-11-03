@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Transaction</title>
+</head>
+<body>
+
+    <h1>Edit Transaction</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <p>
+            <label>Title:</label>
+            <input type="text" name="title"
+                   value="{{ transaction.title }}" required>
+        </p>
+
+        <p>
+            <label>Amount:</label>
+            <input type="number" name="amount"
+                   value="{{ transaction.amount }}"
+                   min="0.01" step="0.01" required>
+        </p>
+
+        <p>
+            <label>Category:</label>
+            <select name="category">
+                {% for value, label in transaction.CATEGORY_CHOICES %}
+                    <option value="{{ value }}"
+                        {% if transaction.category == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </p>
+
+        <p>
+            <label>Type:</label>
+            <select name="transaction_type">
+                <option value="Income"
+                    {% if transaction.transaction_type == "Income" %}selected{% endif %}>
+                    Income
+                </option>
+                <option value="Expense"
+                    {% if transaction.transaction_type == "Expense" %}selected{% endif %}>
+                    Expense
+                </option>
+            </select>
+        </p>
+
+        <p>
+            <label>Date:</label>
+            <input type="date" name="date"
+                   value="{{ transaction.date|date:'Y-m-d' }}" required>
+        </p>
+
+        <p>
+            <label>Description:</label>
+            <textarea name="description">{{ transaction.description }}</textarea>
+        </p>
+
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <a href="/">Back to Dashboard</a>
+
+</body>
+</html>

@@ -1,0 +1,782 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Expense Tracker | ExpenseFlow</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f6fc;
+            color: #20243a;
+        }
+
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: #17172e;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 30px 20px;
+            color: white;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 23px;
+            font-weight: 800;
+            margin-bottom: 55px;
+            color: #a78bfa;
+        }
+
+        .nav a {
+            display: block;
+            padding: 15px;
+            color: #b8b8d1;
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .nav a.active,
+        .nav a:hover {
+            background: #7048e8;
+            color: white;
+        }
+
+        .main {
+            margin-left: 240px;
+            padding: 35px;
+            min-width: 0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
+        }
+
+        .header h1 {
+            font-size: 27px;
+        }
+
+        .header p {
+            color: #888ba0;
+            margin-top: 8px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+            margin-bottom: 35px;
+        }
+
+        .card {
+            padding: 25px;
+            background: white;
+            border-radius: 17px;
+            box-shadow: 0 5px 20px rgba(0,0,0,.04);
+        }
+
+        .card p {
+            color: #85879b;
+            font-size: 14px;
+        }
+
+        .card h2 {
+            margin-top: 15px;
+            font-size: 27px;
+        }
+
+        .balance {
+            background: linear-gradient(135deg, #7048e8, #a78bfa);
+            color: white;
+        }
+
+        .balance p {
+            color: #eee6ff;
+        }
+
+        .income {
+            color: #16a36a;
+        }
+
+        .expense {
+            color: #ed5368;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 17px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,.04);
+        }
+
+        .section h2 {
+            font-size: 19px;
+            margin-bottom: 22px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #e4e5ee;
+            border-radius: 9px;
+            font-family: inherit;
+            outline: none;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            border-color: #7048e8;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        button {
+            background: #7048e8;
+            color: white;
+            border: none;
+            padding: 13px 22px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: #5732c5;
+        }
+</style>
+</head>
+
+<style>
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px;
+    }
+
+    th, td {
+        padding: 16px 12px;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f5;
+        font-size: 13px;
+    }
+
+    th {
+        color: #9294a7;
+    }
+
+    .tag {
+        padding: 7px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .tag-income {
+        background: #e4f8ee;
+        color: #16a36a;
+    }
+
+    .tag-expense {
+        background: #fff0f2;
+        color: #ed5368;
+    }
+
+    .delete-btn {
+        background: #fff0f2;
+        color: #ed5368;
+        padding: 7px 10px;
+    }
+
+    .delete-btn:hover {
+        background: #ffdce2;
+    }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 25px;
+    }
+
+    .chart-box {
+        min-width: 0;
+        height: 300px;
+    }
+
+    .chart-box h3 {
+        margin-bottom: 20px;
+        font-size: 15px;
+    }
+
+    .empty {
+        text-align: center;
+        color: #9294a7;
+        padding: 25px;
+    }
+
+    @media(max-width: 900px) {
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+            padding: 15px;
+        }
+
+        .logo {
+            margin-bottom: 15px;
+        }
+
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .nav a {
+            margin-bottom: 0;
+            padding: 10px;
+            font-size: 13px;
+        }
+
+        .main {
+            margin-left: 0;
+            padding: 20px;
+        }
+
+        .cards {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media(max-width: 650px) {
+        .form-grid,
+        .chart-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .full {
+            grid-column: auto;
+        }
+
+        .section {
+            padding: 18px;
+        }
+    }
+</style>
+
+<body>
+
+<aside class="sidebar">
+
+    <div class="logo">✦ ExpenseFlow</div>
+
+    <nav class="nav">
+        <a href="/" class="active">▦ Dashboard</a>
+        <a href="#analytics">📊 Analytics</a>
+        <a href="#reports">📅 Monthly Reports</a>
+        <a href="#transactions">⇄ Transactions</a>
+        <a href="#add-transaction">＋ Add Transaction</a>
+    </nav>
+
+</aside>
+
+<main class="main">
+
+   <div class="header">
+    <div>
+        <h1>Dashboard</h1>
+
+        <p>
+            Welcome back, {{ request.user.username }}!
+            Here's your financial overview.
+        </p>
+    </div>
+
+    <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+
+        <button type="submit">
+            Logout
+        </button>
+    </form>
+</div>
+
+    <!-- SUMMARY CARDS -->
+
+    <div class="cards">
+
+        <div class="card balance">
+            <p>Total Balance</p>
+            <h2>₹{{ balance|floatformat:2 }}</h2>
+        </div>
+
+        <div class="card">
+            <p>Total Income</p>
+            <h2 class="income">
+                ₹{{ income|floatformat:2 }}
+            </h2>
+        </div>
+
+        <div class="card">
+            <p>Total Expenses</p>
+            <h2 class="expense">
+                ₹{{ expenses|floatformat:2 }}
+            </h2>
+        </div>
+
+    </div>
+
+<!-- ANALYTICS SECTION -->
+
+<section class="section" id="analytics">
+
+    <h2>Financial Analytics</h2>
+
+    <p style="color:#9294a7; margin-bottom:20px;">
+        Your financial overview for the last six months
+    </p>
+
+    <div class="chart-grid">
+
+        <div class="chart-box">
+            <h3>Income vs Expenses</h3>
+            <canvas id="monthlyChart"></canvas>
+        </div>
+
+        <div class="chart-box">
+            <h3>Expenses by Category</h3>
+            <canvas id="categoryChart"></canvas>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- MONTHLY FINANCIAL REPORT -->
+
+<section class="section" id="reports">
+
+    <h2>Monthly Financial Reports</h2>
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Income</th>
+                    <th>Expenses</th>
+                    <th>Savings</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for report in monthly_report %}
+
+                <tr>
+                    <td>{{ report.month }}</td>
+
+                    <td class="income">
+                        ₹{{ report.income|floatformat:2 }}
+                    </td>
+
+                    <td class="expense">
+                        ₹{{ report.expenses|floatformat:2 }}
+                    </td>
+
+                    <td>
+                        ₹{{ report.savings|floatformat:2 }}
+                    </td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="4" class="empty">
+                        No monthly reports available.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+<!-- ADD TRANSACTION SECTION -->
+
+<section class="section" id="add-transaction">
+
+    <h2>＋ Add New Transaction</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-grid">
+
+            <div>
+                <label>Transaction Title</label>
+
+                <input
+                    type="text"
+                    name="title"
+                    placeholder="e.g. Monthly Salary"
+                    required
+                >
+            </div>
+
+            <div>
+                <label>Amount (₹)</label>
+
+                <input
+                    type="number"
+                    name="amount"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="Enter amount"
+                    required
+                >
+            </div>
+
+            <div>
+                <label>Category</label>
+
+                <select name="category" required>
+                    <option value="">Select Category</option>
+                    <option value="Food">Food</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Bills">Bills</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Health">Health</option>
+                    <option value="Education">Education</option>
+                    <option value="Salary">Salary</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Transaction Type</label>
+
+                <select name="transaction_type" required>
+                    <option value="">Select Type</option>
+                    <option value="Income">Income</option>
+                    <option value="Expense">Expense</option>
+                </select>
+            </div>
+
+            <div class="full">
+                <label>Date</label>
+
+                <input
+                    type="date"
+                    name="date"
+                    required
+                >
+            </div>
+
+            <div class="full">
+                <button type="submit">
+                    Add Transaction
+                </button>
+            </div>
+
+        </div>
+    </form>
+
+</section>
+
+
+<!-- TRANSACTION HISTORY -->
+
+<section class="section" id="transactions">
+
+    <h2>Recent Transactions</h2>
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for transaction in transactions %}
+
+                <tr>
+
+                    <td>{{ transaction.title }}</td>
+
+                    <td>{{ transaction.category }}</td>
+
+                    <td>
+                        {{ transaction.date|date:"d M Y" }}
+                    </td>
+
+                    <td>
+
+                        {% if transaction.transaction_type == "Income" %}
+
+                            <span class="tag tag-income">
+                                Income
+                            </span>
+
+                        {% else %}
+
+                            <span class="tag tag-expense">
+                                Expense
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if transaction.transaction_type == "income" %}
+
+                            <span class="income">
+                                + ₹{{ transaction.amount|floatformat:2 }}
+                            </span>
+
+                        {% else %}
+
+                            <span class="expense">
+                                - ₹{{ transaction.amount|floatformat:2 }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        <form
+                            method="POST"
+                            action="{% url 'delete_transaction' transaction.id %}"
+                            onsubmit="return confirm('Delete this transaction?');"
+                        >
+
+                            {% csrf_token %}
+
+                            <button type="submit" class="delete-btn">
+                                Delete
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="6" class="empty">
+                        No transactions found. Add your first transaction!
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+</main>
+
+<!-- CHART DATA -->
+
+{{ monthly_report|json_script:"monthly-data" }}
+{{ category_data|json_script:"category-data" }}
+
+<script>
+
+    // Get data from Django
+
+    const monthlyData = JSON.parse(
+        document.getElementById("monthly-data").textContent
+    );
+
+    const categoryData = JSON.parse(
+        document.getElementById("category-data").textContent
+    );
+
+
+    // INCOME VS EXPENSES CHART
+
+    new Chart(document.getElementById("monthlyChart"), {
+
+        type: "bar",
+
+        data: {
+
+            labels: monthlyData.map(item => item.month),
+
+            datasets: [
+
+                {
+                    label: "Income",
+
+                    data: monthlyData.map(
+                        item => Number(item.income)
+                    ),
+
+                    backgroundColor: "#16a36a",
+                    borderRadius: 6
+                },
+
+                {
+                    label: "Expenses",
+
+                    data: monthlyData.map(
+                        item => Number(item.expenses)
+                    ),
+
+                    backgroundColor: "#ed5368",
+                    borderRadius: 6
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            },
+
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+
+        }
+
+    });
+
+
+    // EXPENSES BY CATEGORY CHART
+
+    new Chart(document.getElementById("categoryChart"), {
+
+        type: "doughnut",
+
+        data: {
+
+            labels: categoryData.map(
+                item => item.category
+            ),
+
+            datasets: [
+
+                {
+                    data: categoryData.map(
+                        item => Number(item.total)
+                    ),
+
+                    backgroundColor: [
+                        "#7048e8",
+                        "#a78bfa",
+                        "#16a36a",
+                        "#ed5368",
+                        "#f5a623",
+                        "#36a2eb",
+                        "#ff6384",
+                        "#8bc34a"
+                    ],
+
+                    borderWidth: 2,
+                    borderColor: "#ffffff"
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+
+        }
+
+    });
+
+</script>
+
+</body>
+</html>
